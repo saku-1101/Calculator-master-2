@@ -5,17 +5,14 @@
 //  Created by Jacktator on 31/3/20.
 //  Copyright © 2020 UTS. All rights reserved.
 //
-
 import Foundation
 
 class Calculator {
     
     /// For multi-step calculation, it's helpful to persist existing result
     var currentResult = 0;
-    let operators = ["+", "-", "x", "/", "%"]
-    var no1: Int = 0
-    var opr: String = ""
-    var no2: Int = 0
+    let precedence : [String] = ["x", "/", "%"]
+    
     /// Perform Addition
     ///
     /// - Author: Jacktator
@@ -29,60 +26,103 @@ class Calculator {
     func add(no1: Int, no2: Int) -> Int {
         return no1 + no2;
     }
+    
     func subtract(no1: Int, no2: Int) -> Int {
         return no1 - no2;
     }
+    
+    func divide(no1: Int, no2: Int) -> Int {
+        return no1/no2;
+    }
+    
     func multiply(no1: Int, no2: Int) -> Int {
         return no1 * no2;
     }
-    func divide(no1: Int, no2: Int) -> Int {
-        // Division by zero errors and numeric out-of-bounds errors.
-        return no1 / no2;
-    }
-    func remaind(no1: Int, no2: Int) -> Int {
-        return no1 % no2;
+    
+    func modulo(no1: Int, no2: Int) -> Int {
+        return no1%no2;
     }
     
     func calculate(args: [String]) -> String {
-        // Todo: Calculate Result from the arguments. Replace dummyResult with your actual result;
-        if let val = Int(args[0]){
-            self.no1 = val
-            print(self.no1)
-        }else{
-            print("exit with nonzero status on invalid input: \(args)")
-        }
-//        if operators.contains(args[1]){
-//            opr = args[1]
-//            print(opr)
-//        }else{
-//            print("exit with nonzero status on invalid input: \(args)")
-//        }
-        if let val = Int(args[2]){
-            self.no2 = val
-            print(self.no2)
-        }else{
-            print("exit with nonzero status on invalid input: \(args)")
-        }
-        self.opr = args[1]
-        print(no1, opr, no2)
         
-        switch opr {
-        case operators[0]:
-            self.currentResult = add(no1: no1, no2: no2);
-        case operators[1]:
-            self.currentResult = subtract(no1: no1, no2: no2);
-        case operators[2]:
-            self.currentResult = multiply(no1: no1, no2: no2);
-        case operators[3]:
-            self.currentResult = divide(no1: no1, no2: no2);
-        case operators[4]:
-            self.currentResult = remaind(no1: no1, no2: no2);
-        default:
-            print("exit with nonzero status on invalid input: \(args)")
+        var dummyResult = 0;
+        var substitutedArgs = args // Copy of args
+        // Look for *, /, % and calculate first
+        while (substitutedArgs.contains("x") || substitutedArgs.contains("%") || substitutedArgs.contains("/")){
+            for number in stride(from: 0, to: substitutedArgs.count, by: 2) {
+                // Avoiding Index out of range
+                if (number+2 <= substitutedArgs.count - 1){
+                    if (substitutedArgs.contains(substitutedArgs[number+1]) && substitutedArgs.contains(substitutedArgs[number+2])){
+                        
+                        let no1 = substitutedArgs[number]
+                        let operatorPrecedence = substitutedArgs[number+1]
+                        let no2 = substitutedArgs[number+2]
+                         
+                        // IF there's multiplication operator, calculate, insert, remove not-needed arguments(number + 1 ~ 3)
+                        if (precedence.contains(operatorPrecedence)){
+                            switch operatorPrecedence {
+                            case "/":
+                                dummyResult = divide(no1: Int(no1)!, no2: Int(no2)!);
+                                substitutedArgs.insert(String(dummyResult), at: number)
+                            case "%":
+                                dummyResult = modulo(no1: Int(no1)!, no2: Int(no2)!);
+                                substitutedArgs.insert(String(dummyResult), at: number)
+                            case "x":
+                                dummyResult = multiply(no1: Int(no1)!, no2: Int(no2)!);
+                                substitutedArgs.insert(String(dummyResult), at: number)
+                            default:
+                                break
+                            }
+                            // [now] dummyResult <- substitutedArgs[number]
+                            // Remove numbers three times from [number + 1]
+                            substitutedArgs.remove(at: number+1)
+                            substitutedArgs.remove(at: number+1)
+                            substitutedArgs.remove(at: number+1)
+                            
+                            // Check if x / % operators comes to the next
+                            // If so,　break and start from the biginninng.
+                            // If the designated operators don't come, return on the way of loop.
+                            // Avoiding Index out of range
+                            if(number+1 <= substitutedArgs.count - 1){
+                                if(substitutedArgs.contains(substitutedArgs[number+1]) && precedence.contains(substitutedArgs[number+1])){
+                                    break;
+                                }
+                            }
+                            
+                        }
+                    }
+                }
+            }
+        }
+    
+        // The collection of calculated-by-mltiplication values or the first args's value
+        var no1 = Int(substitutedArgs[0])
+
+        // Addition and Subtraction
+        for number in stride(from: 0, to: substitutedArgs.count, by: 2) {
+            if (number+2 < substitutedArgs.count){
+                if (substitutedArgs.contains(substitutedArgs[number+1]) && substitutedArgs.contains(substitutedArgs[number+2])){
+                    
+                    let no2 = substitutedArgs[number+2]
+                    let operations = substitutedArgs[number+1]
+
+                    switch operations {
+                    case "+":
+                        // to make sure no1 is not a nil
+                        dummyResult = add(no1: no1!, no2: Int(no2)!);
+                        no1 = dummyResult;
+                    case "-":
+                        // to make sure no1 is not a nil
+                        dummyResult = subtract(no1: no1!, no2: Int(no2)!);
+                        no1 = dummyResult;
+                    default:
+                        break
+                    }
+                }
+            }
         }
         
-        
-        let result = String(self.currentResult);
+        let result = String(dummyResult);
         return(result)
     }
 }
