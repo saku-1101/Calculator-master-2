@@ -43,61 +43,52 @@ class Calculator {
         return no1%no2;
     }
     
-    func calculate(args: [String]) -> String {
-        
+    func precedentCalc(args: [String], number: Int) -> [String] {
         var dummyResult = 0;
-        var substitutedArgs = args // Copy of args
-        // Look for *, /, % and calculate first
-        while (substitutedArgs.contains("x") || substitutedArgs.contains("%") || substitutedArgs.contains("/")){
-            for number in stride(from: 0, to: substitutedArgs.count, by: 2) {
-                // Avoiding Index out of range
-                if (number+2 <= substitutedArgs.count - 1){
-                    if (substitutedArgs.contains(substitutedArgs[number+1]) && substitutedArgs.contains(substitutedArgs[number+2])){
-                        
-                        let no1 = substitutedArgs[number]
-                        let operatorPrecedence = substitutedArgs[number+1]
-                        let no2 = substitutedArgs[number+2]
-                         
-                        // IF there's multiplication operator, calculate, insert, remove not-needed arguments(number + 1 ~ 3)
-                        if (precedence.contains(operatorPrecedence)){
-                            switch operatorPrecedence {
-                            case "/":
-                                dummyResult = divide(no1: Int(no1)!, no2: Int(no2)!);
-                                substitutedArgs.insert(String(dummyResult), at: number)
-                            case "%":
-                                dummyResult = modulo(no1: Int(no1)!, no2: Int(no2)!);
-                                substitutedArgs.insert(String(dummyResult), at: number)
-                            case "x":
-                                dummyResult = multiply(no1: Int(no1)!, no2: Int(no2)!);
-                                substitutedArgs.insert(String(dummyResult), at: number)
-                            default:
-                                break
-                            }
-                            // [now] dummyResult <- substitutedArgs[number]
-                            // Remove numbers three times from [number + 1]
-                            substitutedArgs.remove(at: number+1)
-                            substitutedArgs.remove(at: number+1)
-                            substitutedArgs.remove(at: number+1)
-                            
-                            // Check if x / % operators comes to the next
-                            // If so,　break and start from the biginninng.
-                            // If the designated operators don't come, return on the way of loop.
-                            // Avoiding Index out of range
-                            if(number+1 <= substitutedArgs.count - 1){
-                                if(substitutedArgs.contains(substitutedArgs[number+1]) && precedence.contains(substitutedArgs[number+1])){
-                                    break;
-                                }
-                            }
-                            
-                        }
-                    }
-                }
-            }
+        var substitutedArgs = args // Copy of args to enable mutation
+        
+        // If there's nothing to help with substitudedArgs by percedentCalc function
+        if (!(substitutedArgs.contains("x") || substitutedArgs.contains("%") || substitutedArgs.contains("/")) || number >= substitutedArgs.count){
+            return args
         }
+        let no1 = substitutedArgs[number]
+        let op = substitutedArgs[number+1]
+        let no2 = substitutedArgs[number+2]
+        // If there's no multiplication operator, in [number] ~ [number + 2], proceed to the next number scope.
+        if !(precedence.contains(op)){
+            return precedentCalc(args: substitutedArgs, number: number + 2)
+        }else{
+            // IF there's multiplication operator, calculate, insert, remove not-needed arguments(number + 1 ~ 3)
+            switch op {
+            case "/":
+                dummyResult = divide(no1: Int(no1)!, no2: Int(no2)!);
+                substitutedArgs.insert(String(dummyResult), at: number)
+            case "%":
+                dummyResult = modulo(no1: Int(no1)!, no2: Int(no2)!);
+                substitutedArgs.insert(String(dummyResult), at: number)
+            case "x":
+                dummyResult = multiply(no1: Int(no1)!, no2: Int(no2)!);
+                substitutedArgs.insert(String(dummyResult), at: number)
+            default:
+                break
+            }
+            // [now] dummyResult <- substitutedArgs[number]
+            // Remove numbers three times from [number + 1]
+            substitutedArgs.remove(at: number+1)
+            substitutedArgs.remove(at: number+1)
+            substitutedArgs.remove(at: number+1)
+            return precedentCalc(args: substitutedArgs, number: number)
+        }
+    }
     
+    func calculate(args: [String], number: Int) -> String {
+        
+        var dummyResult = 0
+        let substitutedArgs = precedentCalc(args: args, number: 0)
+        
         // The collection of calculated-by-mltiplication values or the first args's value
         var no1 = Int(substitutedArgs[0])
-
+        
         // Addition and Subtraction
         for number in stride(from: 0, to: substitutedArgs.count, by: 2) {
             if (number+2 < substitutedArgs.count){
@@ -105,7 +96,7 @@ class Calculator {
                     
                     let no2 = substitutedArgs[number+2]
                     let operations = substitutedArgs[number+1]
-
+                    
                     switch operations {
                     case "+":
                         // to make sure no1 is not a nil
@@ -119,6 +110,8 @@ class Calculator {
                         break
                     }
                 }
+            }else{
+                dummyResult = no1!
             }
         }
         

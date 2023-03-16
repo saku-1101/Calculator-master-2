@@ -64,6 +64,6 @@ for element in args{
 let calculator = Calculator();
 
 // Calculate the result
-let result = calculator.calculate(args: args);
+let result = calculator.calculate(args: args, number: 0);
 
 print(result)
